@@ -6,15 +6,64 @@
 builddir=.
 top_srcdir=/usr/share/apache2
 top_builddir=/usr/share/apache2
-include /usr/share/apache2/build/special.mk
+dependency_dir=../dependency
+
+## inline from /usr/share/apache2/build/special.mk >
+
+all: all-recursive
+
+# include $(builddir)/modules.mk
+
+## inline from /usr/share/apache2/build/special.mk <
+
+## inline from modules.mk >
+
+mod_objc_example.la: mod_objc_example.slo libobjc-library.a
+	$(SH_LINK) -rpath $(libexecdir) -module -avoid-version  mod_objc_example.lo
+DISTCLEAN_TARGETS = modules.mk
+shared =  mod_objc_example.la
+
+## inline from modules.mk <
+
+## inline from /usr/share/apache2/build/special.mk >
+
+
+TARGETS = $(static)
+SHARED_TARGETS = $(shared)
+INSTALL_TARGETS = install-modules-$(INSTALL_DSO)
+
+include $(top_builddir)/build/rules.mk
+
+install-modules-yes: $(SHARED_TARGETS)
+	@$(MKINSTALLDIRS) $(DESTDIR)$(libexecdir)
+	@list='$(shared)'; for i in $$list; do \
+	  $(top_srcdir)/build/instdso.sh SH_LIBTOOL='$(SH_LIBTOOL)' $$i $(DESTDIR)$(libexecdir); \
+	done
+
+install-modules-no:
+
+## inline from /usr/share/apache2/build/special.mk <
+
 
 #   the used tools
 APACHECTL=apachectl
 
 #   additional defines, includes and libraries
 #DEFS=-Dmy_define=my_value
-#INCLUDES=-Imy/include/dir
-#LIBS=-Lmy/lib/dir -lmylib
+INCLUDES=-I${dependency_dir}/include
+OBJC_LIBRARIES=-lobjc-library -lMulleObjC-standalone -lpthread -ldl
+EXTRA_LDFLAGS=-L. -L${dependency_dir}/lib $(OBJC_LIBRARIES) $(C_LIBRARIES)
+
+
+
+.SUFFIXES: .o .m
+
+%.o:	%.m
+	mulle-clang -c -fobjc-tlu -fPIC $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(ALL_INCLUDES) $(INCLUDES) $< 
+
+libobjc-library.a:	handler.o
+	ar cru $@ $< 
+
 
 #   the default target
 all: local-shared-build

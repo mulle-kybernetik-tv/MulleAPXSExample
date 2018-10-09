@@ -42,18 +42,8 @@
 #include "http_protocol.h"
 #include "ap_config.h"
 
-/* The sample content handler */
-static int objc_example_handler(request_rec *r)
-{
-    if (strcmp(r->handler, "objc_example")) {
-        return DECLINED;
-    }
-    r->content_type = "text/html";      
 
-    if (!r->header_only)
-        ap_rputs("The sample page from mod_objc_example.c\n", r);
-    return OK;
-}
+extern int objc_example_handler(request_rec *r);
 
 static void objc_example_register_hooks(apr_pool_t *p)
 {

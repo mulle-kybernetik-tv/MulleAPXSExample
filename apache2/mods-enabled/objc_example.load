@@ -1,0 +1,1 @@
+LoadModule objc_example_module /usr/lib/apache2/modules/mod_objc_example.so
