@@ -53,9 +53,9 @@ EOF
 
 
 # https://cmake.org/Wiki/CMake_Checking_Platform
-uname_to_cmake()
+r_uname_to_cmake()
 {
-   log_entry "uname_to_cmake" "$@"
+   log_entry "r_uname_to_cmake" "$@"
 
    local uname="$1"
 
@@ -76,17 +76,15 @@ uname_to_cmake()
       ;;
    esac
 
-   echo "\${CMAKE_SYSTEM_NAME} MATCHES \"${systemname}\""
+   RVAL="\${CMAKE_SYSTEM_NAME} MATCHES \"${systemname}\""
 }
 
 
-osexclude_to_cmake_if()
+r_osexclude_to_cmake_if()
 {
-   log_entry "osexclude_to_cmake_if" "$@"
+   log_entry "r_osexclude_to_cmake_if" "$@"
 
    local marks="$1"
-
-   local cmakevar
 
    local excludes
    local onlys
@@ -99,13 +97,15 @@ osexclude_to_cmake_if()
 
       case "${osexclude}" in
          only-os-*)
-            cmakevar="`uname_to_cmake "${osexclude:8}"`"
-            onlys="`concat "${onlys}" "${cmakevar}" " OR " `"
+            r_uname_to_cmake "${osexclude:8}"
+            r_concat "${onlys}" "${RVAL}" " OR "
+            onlys="${RVAL}"
          ;;
 
          no-os-*)
-            cmakevar="`uname_to_cmake "${osexclude:6}"`"
-            excludes="`concat "${excludes}" "${cmakevar}" " AND "`"
+            r_uname_to_cmake "${osexclude:6}"
+            r_concat "${excludes}" "${RVAL}" " AND "
+            excludes="${RVAL}"
          ;;
       esac
    done
@@ -115,7 +115,7 @@ osexclude_to_cmake_if()
 
    if [ ! -z "${onlys}" ]
    then
-      echo "if( ${onlys})"
+      RVAL="if( ${onlys})"
       return
    fi
 
@@ -123,14 +123,18 @@ osexclude_to_cmake_if()
    then
       case "${excludes}" in
          *" OR "*)
-            echo "if( NOT (${excludes}))"
+            RVAL="if( NOT (${excludes}))"
+            return
          ;;
 
          *)
-            echo "if( NOT ${excludes})"
+            RVAL="if( NOT ${excludes})"
+            return
          ;;
       esac
    fi
+
+   RVAL=""
 }
 
 
@@ -242,20 +246,24 @@ _emit_cmake_find_library()
    IFS=","; set -o noglob
    for i in ${names}
    do
-      quoted_names="`concat "${quoted_names}" "\\\"${i}\\\"" `"
+      r_concat "${quoted_names}" "\"${i}\"" 
+      quoted_names="${RVAL}"
 
       case "${preference}" in
          "static")
-            libraries="`concat "${libraries}" "\\\${CMAKE_STATIC_LIBRARY_PREFIX}${i}\\\${CMAKE_STATIC_LIBRARY_SUFFIX}"`"
+            r_concat "${libraries}" "\${CMAKE_STATIC_LIBRARY_PREFIX}${i}\${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            libraries="${RVAL}"
          ;;
 
          "shared")
-            libraries="`concat "${libraries}" "\\\${CMAKE_SHARED_LIBRARY_PREFIX}${i}\\\${CMAKE_SHARED_LIBRARY_SUFFIX}"`"
+            r_concat "${libraries}" "\${CMAKE_SHARED_LIBRARY_PREFIX}${i}\${CMAKE_SHARED_LIBRARY_SUFFIX}"
+            libraries="${RVAL}"
          ;;
       esac
 
       # fallback to whatever linkage
-      libraries="`concat "${libraries}" "${i}"`"
+      r_concat "${libraries}" "${i}"
+      libraries="${RVAL}"
    done
    IFS="${DEFAULT_IFS}"; set -o noglob
 
@@ -288,7 +296,7 @@ _emit_cmake_find_library()
 ${indent}if( NOT ${identifier}_LIBRARY)
 ${indent}   find_library( ${identifier}_LIBRARY NAMES ${libraries})
 ${indent}   message( STATUS "${identifier}_LIBRARY is \${${identifier}_LIBRARY}")
-${indent}
+${indent}   #
 ${indent}   # the order looks ascending, but due to the way this file is read
 ${indent}   # it ends up being descending, which is what we need
 ${indent}   if( ${identifier}_LIBRARY)
@@ -317,7 +325,7 @@ EOF
 ${indent}      # temporarily expand CMAKE_MODULE_PATH
 ${indent}      get_filename_component( _TMP_${identifier}_ROOT "\${${identifier}_LIBRARY}" DIRECTORY)
 ${indent}      get_filename_component( _TMP_${identifier}_ROOT "\${_TMP_${identifier}_ROOT}" DIRECTORY)
-${indent}
+${indent}      #
 EOF
 
       _emit_dependencies_loader_cmake_code "${identifier}" \
@@ -371,9 +379,11 @@ _emit_cmake_header_only()
    IFS=","; set -o noglob
    for i in ${names}
    do
-      headers="`concat "${headers}" "${i}/${i}.h"`"
-      headers="`concat "${headers}" "${i}.h"`"
+      r_concat "${headers}" "${i}/${i}.h"
+      r_concat "${RVAL}" "${i}.h"
+      headers="${RVAL}"
    done
+
    IFS="${DEFAULT_IFS}"; set +o noglob
 
    case ",${marks}," in
@@ -404,6 +414,7 @@ _emit_cmake_header_only()
 ${indent}if( NOT ${identifier}_HEADER)
 ${indent}   find_file( ${identifier}_HEADER NAMES ${headers})
 ${indent}   message( STATUS "${identifier}_HEADER is \${${identifier}_HEADER}")
+
 EOF
 
    case ",${marks}," in
@@ -454,6 +465,7 @@ ${indent}   else()
 ${indent}      message( ${failstatus} "${failstring}")
 ${indent}   endif()
 ${indent}endif()
+
 EOF
 }
 
@@ -476,6 +488,7 @@ emit_cmake_dependency()
    local ifstatement
    local endifstatement
    local name
+   local RVAL
 
    #
    # ALL_LOAD_ is the default for Objective-C static libraries and is the
@@ -486,7 +499,9 @@ emit_cmake_dependency()
 
    if [ ! -z "${marks}" ]
    then
-      ifstatement="`osexclude_to_cmake_if "${marks}" `"
+      r_osexclude_to_cmake_if "${marks}" 
+      ifstatement="${RVAL}"
+
       if [ ! -z "${ifstatement}" ]
       then
          indent="   "
@@ -523,7 +538,8 @@ emit_cmake_dependency()
    fi
 
    local RVAL
-   r_tweaked_de_camel_case "${PROJECT_NAME}"
+
+   r_tweaked_de_camel_case "${address}"
    identifier="`printf "%s" "${RVAL}" | tr -c 'a-zA-Z0-9' '_'`"
    identifier="`tr 'a-z' 'A-Z' <<< "${identifier}"`"
 
@@ -685,8 +701,10 @@ endif()
 ${text_lib}"
 
    log_verbose "Writing ${C_RESET_BOLD}${MULLE_SDE_LIBRARIES_FILE}"
-   exekutor mkdir -p  "`fast_dirname "${MULLE_SDE_LIBRARIES_FILE}"`" 2> /dev/null
+   r_fast_dirname "${MULLE_SDE_LIBRARIES_FILE}"
+   exekutor mkdir -p "${RVAL}" 2> /dev/null
    exekutor chmod a+w "${MULLE_SDE_LIBRARIES_FILE}"  2> /dev/null
+   r_mkdir_parent_if_missing "${MULLE_SDE_LIBRARIES_FILE}"
    redirect_exekutor "${MULLE_SDE_LIBRARIES_FILE}" echo "${text_lib}"
    exekutor chmod a-w "${MULLE_SDE_LIBRARIES_FILE}"
 }
@@ -723,8 +741,10 @@ ${text_dep}"
    log_fluff "Create cmake files (${PWD})"
 
    log_verbose "Writing ${C_RESET_BOLD}${MULLE_SDE_DEPENDENCIES_FILE}"
-   exekutor mkdir -p  "`fast_dirname "${MULLE_SDE_DEPENDENCIES_FILE}"`" 2> /dev/null
+   r_fast_dirname "${MULLE_SDE_DEPENDENCIES_FILE}"
+   exekutor mkdir -p "${RVAL}" 2> /dev/null
    exekutor chmod a+w "${MULLE_SDE_DEPENDENCIES_FILE}"  2> /dev/null
+   r_mkdir_parent_if_missing "${MULLE_SDE_DEPENDENCIES_FILE}"
    redirect_exekutor "${MULLE_SDE_DEPENDENCIES_FILE}" echo "${text_dep}"
    exekutor chmod a-w "${MULLE_SDE_DEPENDENCIES_FILE}"
 }
@@ -827,7 +847,7 @@ _init()
          exit 1
    fi
 
-   . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-bashfunctions.sh" "minimal" || exit 1
+   . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-bashfunctions.sh" || exit 1
 }
 
 _init "$@"

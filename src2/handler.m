@@ -20,7 +20,7 @@
     extern uint32_t   mulle_objc_uniqueid_from_string( char *);
     uint32_t   hash;
 
-    hash = mulle_objc_uniqueid_from_string( "bar");
+    hash = mulle_objc_uniqueid_from_string( "foo");
     return( hash);
 }
 @end
@@ -29,7 +29,7 @@
 /* The sample content handler */
 int objc_example_handler(request_rec *r)
 {
-    if (strcmp(r->handler, "objc_example")) {
+    if (strcmp(r->handler, "objc_example2_module")) {
         return DECLINED;
     }
     r->content_type = "text/html";      
@@ -37,7 +37,7 @@ int objc_example_handler(request_rec *r)
     extern uint32_t   mulle_objc_uniqueid_from_string( char *);
     uint32_t   hash;
 
-    hash = mulle_objc_uniqueid_from_string( "bar");
+    hash = mulle_objc_uniqueid_from_string( "foo");
 
     if (!r->header_only)
     {
@@ -50,7 +50,7 @@ int objc_example_handler(request_rec *r)
        ap_rprintf(r, "NSThread     : 0x%lx\n", (unsigned long) (uintptr_t) [NSThread currentThread]);
        ap_rprintf(r, "mulle-thread : 0x%lx\n", mulle_thread_self());
        ap_rprintf(r, "obj          : 0x%lx\n",  (unsigned long) (uintptr_t)  obj);
-       ap_rprintf(r, "Hashed \"bar\" : %lx</pre>", (unsigned long) [obj gimme]); 
+       ap_rprintf(r, "Hashed \"foo\" : %lx</pre>", (unsigned long) [obj gimme]); 
     }
     return OK;
 }

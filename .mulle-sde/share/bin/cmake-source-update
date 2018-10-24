@@ -187,6 +187,7 @@ ${text_hdr}
    log_verbose "Writing ${C_RESET_BOLD}${MULLE_SDE_CMAKE_HEADERS_FILE}"
    exekutor mkdir -p  "`fast_dirname "${MULLE_SDE_CMAKE_HEADERS_FILE}"`"
    exekutor chmod a+w "${MULLE_SDE_CMAKE_HEADERS_FILE}"  2> /dev/null
+   r_mkdir_parent_if_missing "${MULLE_SDE_CMAKE_HEADERS_FILE}"
    redirect_exekutor "${MULLE_SDE_CMAKE_HEADERS_FILE}" echo "${text_hdr}"
    exekutor chmod a-w "${MULLE_SDE_CMAKE_HEADERS_FILE}"
 }
@@ -222,7 +223,7 @@ create_sources_file()
             #
             # header only libraries are tricky to do portably
             #
-            text_src="message( ERROR \" No sources found. \`mulle-sde environment set MULLE_SDE_CMAKE_SOURCES_FILE NONE\`, if this is intentional\")"
+            text_src="message( FATAL_ERROR \" No sources found. \`mulle-sde environment set MULLE_SDE_CMAKE_SOURCES_FILE NONE\`, if this is intentional\")"
          fi
 
       ;;
@@ -242,6 +243,7 @@ ${text_src}"
    log_verbose "Writing ${C_RESET_BOLD}${MULLE_SDE_CMAKE_SOURCES_FILE}"
    exekutor mkdir -p  "`fast_dirname "${MULLE_SDE_CMAKE_SOURCES_FILE}"`" 2> /dev/null
    exekutor chmod a+w "${MULLE_SDE_CMAKE_SOURCES_FILE}"  2> /dev/null
+   r_mkdir_parent_if_missing "${MULLE_SDE_CMAKE_SOURCES_FILE}"
    redirect_exekutor "${MULLE_SDE_CMAKE_SOURCES_FILE}" echo "${text_src}"
    exekutor chmod a-w "${MULLE_SDE_CMAKE_SOURCES_FILE}"
 }
@@ -365,7 +367,7 @@ _init()
          exit 1
    fi
 
-   . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-bashfunctions.sh" "minimal" || exit 1
+   . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-bashfunctions.sh"  || exit 1
 }
 
 _init "$@"

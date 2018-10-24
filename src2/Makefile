@@ -18,10 +18,10 @@ all: all-recursive
 
 ## inline from modules.mk >
 
-mod_objc_example.la: mod_objc_example.slo libobjc-library.a
-	$(SH_LINK) -rpath $(libexecdir) -module -avoid-version  mod_objc_example.lo
+mod_objc_example2.la: mod_objc_example2.slo libobjc-library.a
+	$(SH_LINK) -rpath $(libexecdir) -module -avoid-version  mod_objc_example2.lo
 DISTCLEAN_TARGETS = modules.mk
-shared =  mod_objc_example.la
+shared =  mod_objc_example2.la
 
 ## inline from modules.mk <
 
@@ -51,16 +51,16 @@ APACHECTL=apachectl
 #   additional defines, includes and libraries
 #DEFS=-Dmy_define=my_value
 INCLUDES=-I${dependency_dir}/include
-OBJC_LIBRARIES=-lobjc-library -lMulleObjC-standalone -lpthread -ldl
+OBJC_LIBRARIES=-lobjc-library -lMulleObjC2-standalone -lpthread -ldl
 EXTRA_LDFLAGS=-L. -L${dependency_dir}/lib $(OBJC_LIBRARIES) $(C_LIBRARIES)
 
 
 
 .SUFFIXES: .o .m
 
-# 
+# -fobjc-universename="u1848" 
 %.o:	%.m
-	mulle-clang -c -fobjc-universename="vfl1848" -fPIC $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(ALL_INCLUDES) $(INCLUDES) $< 
+	mulle-clang -c -fobjc-universename="vfl1849" -fPIC $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(ALL_INCLUDES) $(INCLUDES) $< 
 
 libobjc-library.a:	handler.o
 	ar cru $@ $< 
@@ -74,11 +74,11 @@ install: install-modules-yes
 
 #   cleanup
 clean:
-	-rm -f mod_objc_example.o mod_objc_example.lo mod_objc_example.slo mod_objc_example.la 
+	-rm -f mod_objc_example2.o mod_objc_example2.lo mod_objc_example2.slo mod_objc_example2.la 
 
 #   simple test
 test: reload
-	lynx -mime_header http://localhost/objc_example
+	lynx -mime_header http://localhost/objc_example2
 
 #   install and activate shared object by reloading Apache to
 #   force a reload of the shared object file

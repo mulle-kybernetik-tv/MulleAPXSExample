@@ -1,1 +1,2 @@
+craftinfo/MulleObjC;local;no-delete,no-header,no-link,no-share,no-update;ec65b23e-0dc7-47d2-b3b5-ced9c3550066;;;;;
 MulleObjC;tar;;73fa553f-02f3-4039-827a-8ae4548fc1bc;${MULLE_OBJC_URL:-https://github.com/mulle-objc/MulleObjC/archive/${MULLE_OBJC_BRANCH:-latest}.tar.gz};;;;
